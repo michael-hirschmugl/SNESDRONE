@@ -1,0 +1,9 @@
+Supplier: Digikey
+Suppier Part Number: 544-3098-ND
+Manufacturer: Intel
+Manufacturer Part Number: 10M02SCE144C8G
+Price per unit: EUR 6.18
+Package: 144-LQFP
+https://www.digikey.at/product-detail/de/intel/10M02SCE144C8G/544-3098-ND/5284822
+
+Dev-Board Link: https://tinyurl.com/y5ngapzo
