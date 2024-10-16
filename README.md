@@ -1,16 +1,10 @@
-# SNESDRONE Documentation
-
-[Toningenieur-Projekt_Hirschmugl.odt](images/Toningenieur-Projekt_Hirschmugl.odt)
-
-***
-# Wavetable Audio Synthesizer Cartridge for a Gaming Console
+# SNESDRONE - Wavetable Audio Synthesizer Cartridge for a Gaming Console
 
 ## ARM-based ROM emulation for a 16-bit gaming console in order to use its internal wavetable synthesizer chip as a musical instrument
 
 Michael Hirschmugl BSc.
 Audio Engineering Project, Institute of Electronics, Technical University Graz
 February 2020
-
 
 Advisor:
 Dipl.Ing. Michael Fuchs
