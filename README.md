@@ -2,12 +2,11 @@
 
 ## ARM-based ROM emulation for a 16-bit gaming console in order to use its internal wavetable synthesizer chip as a musical instrument
 
-Michael Hirschmugl BSc.
-Audio Engineering Project, Institute of Electronics, Technical University Graz
-February 2020
+Michael Hirschmugl
 
-Advisor:
-Dipl.Ing. Michael Fuchs
+Audio Engineering Project, Institute of Electronics, Technical University Graz
+
+February 2020
 
 ## Abstract
 The SNES (or Super Famicom) is widely considered as one of the greatest gaming consoles of all time. Even though its games had fantastic soundtracks, it's not too well known, that the console actually used a sort of wavetable synthesis chip by Sony for this. This chip is based on the technology of iconic synthesizers from the 1980s such as the Korg Wavestation. Together with the DSP technology by Sony, the console can produce eight stereo channels of sample-based synthesis, one noise channel, has ADSR envelope controls and even echo, filtering and modulation effects.
@@ -37,38 +36,69 @@ The goal of this project is to make use of this chip and to turn the console int
 | ADSR         | Attack Decay Sustain Release        |
 
 ## Table of Contents
- 1  Introduction
- 1.1  Project Goals and Motivation
- 1.2  Wavetable Synthesis
- 1.3  SNES Hardware
- 1.3.1  General Overview
- 1.3.2  CPU – Central Processing Unit
- 1.3.2.1  Bus Transfer Timing Diagram
- 1.3.3  PPU – Picture Processing Unit
- 1.3.3.1  V-BLANK – Vertical Blank
- 1.3.3.2  Character and Palette Format
- 1.3.4  APU – Audio Processing Unit
- 1.3.4.1  SPC-700
- 1.3.4.2  The DSP
- 1.3.4.3  Functionality and Block Diagram
- 1.3.4.4  Bit Rate Reduction Audio Format (BRR)
- 2  Cartridge Hardware Development
- 2.1  Microcontroller
- 2.2  Connection between console and microcontroller
- 2.3  Potentiometers and other peripherals
- 2.4  Power supply
- 3  Firmware Development
- 3.1  Overview
- 3.2  Setting up a Development Environment
- 3.2.1  Setting up WLA DX
- 3.2.2  Setting up bsnes plus
- 3.3  SNES Software
- 3.3.1  Initializing Internal Hardware
- 3.3.2  Enabling the Graphical User Interface
- 3.3.3  Waiting for SPC-700 Boot
- 3.3.4  Writing Samples to APU Memory
- 3.4  ARM µC Firmware
- 4  Conclusion and Outlook
+1  Introduction
+
+1.1  Project Goals and Motivation
+
+1.2  Wavetable Synthesis
+
+1.3  SNES Hardware
+
+1.3.1  General Overview
+
+1.3.2  CPU – Central Processing Unit
+
+1.3.2.1  Bus Transfer Timing Diagram
+
+1.3.3  PPU – Picture Processing Unit
+
+1.3.3.1  V-BLANK – Vertical Blank
+
+1.3.3.2  Character and Palette Format
+
+1.3.4  APU – Audio Processing Unit
+
+1.3.4.1  SPC-700
+
+1.3.4.2  The DSP
+
+1.3.4.3  Functionality and Block Diagram
+
+1.3.4.4  Bit Rate Reduction Audio Format (BRR)
+
+2  Cartridge Hardware Development
+
+2.1  Microcontroller
+
+2.2  Connection between console and microcontroller
+
+2.3  Potentiometers and other peripherals
+
+2.4  Power supply
+
+3  Firmware Development
+
+3.1  Overview
+
+3.2  Setting up a Development Environment
+
+3.2.1  Setting up WLA DX
+
+3.2.2  Setting up bsnes plus
+
+3.3  SNES Software
+
+3.3.1  Initializing Internal Hardware
+
+3.3.2  Enabling the Graphical User Interface
+
+3.3.3  Waiting for SPC-700 Boot
+
+3.3.4  Writing Samples to APU Memory
+
+3.4  ARM µC Firmware
+
+4  Conclusion and Outlook
 
 # 1 Introduction
 While wavetable synthesis has been around since the early 1980s, with the advent of software based audio synthesizers, it is rarely based on hardware anymore. Still, to comprehend and apply the underlying algorithms, it is useful to realize a wavetable synthesizer for audio applications on dedicated hardware. The Super Nintendo Entertainment System (SNES) is a gaming console which surfaced in 1990 and uses one such chip, as well as a derivative of the WD65816 MPU (microprocessor unit) as a CPU (central processing unit), which is one of the first MPUs to work with an 16-bit arithmetic logic unit (ALU) and other bedrock features still used in today’s modern platforms.
@@ -99,17 +129,20 @@ The project goals are listed in order of chronologically achieved milestones:
 Wavetable synthesis in its most basic form is the continuous repetition of a single digital audio sample [1]. This concept should not be confused with sample-based synthesis. While all wavetable oscillators are indeed sample based, not all sample based-synthesizers may be called wavetable synthesizer [2]. This is because wavetable synthesis also provides features for shifting between different waves in a table. This concept is displayed in figure 1. While the highlighted triangular function is the fundamental signal for this wavetable oscillation, it is possible to gradually shift to a sine or saw tooth function by LFO modulation or simply manually. This yields the possibility of automated manipulations of the frequency spectrum and can be viewed as a form of additive synthesis.
 
 ![9f3bb2e252e67dd97ec66d9dfc9df7c5.png](images/9f3bb2e252e67dd97ec66d9dfc9df7c5.png)
+
 *Figure 1: Visualization of a software wavetable synthesizer* [Screenshot taken from Arturia “Pigments” (polychromatic software synthesizer). Copyright 2020 by Arturia. Visit Arturia at https://www.arturia.com/]
 
 In a wavetable oscillator, the signal data is not procedurally generated by a mathematical function, but rather fetched from a table of stored values (figure 2). A differentiation must be established here, because while there is a table of different waveforms (wavetable), there is also a table of values for each waveform (look-up table).
 
 ![6d69acad36b893ab4e7a317fa16b9bf7.png](images/6d69acad36b893ab4e7a317fa16b9bf7.png)
+
 Figure 2: Example look-up table waveform [“Wellenformtabelle mit Sinus” from “Klangsynthese 1” (f. 3.8, p. 37) by W. Ritsch, 2010, Institute of Electronic Music and Acoustics]
 
 The pitch shift in a wavetable synthesizer is accomplished by reading the sample data with different step sizes. A higher step size will result in a higher pitch. While this is a very simple and effective method for pitch shifting, special attention has to be paid to musical timbre, since harmonics are also shifted with the base frequency of a sample [3].
 Equation 1 shows a mathematical representation of an algorithm that fetches signal values from a look-up table in regard of the desired pitch or frequency.
 
 *Equation 1*
+
 $$
 y(n) = A(n) \cdot \text{table}\left[\text{round}(S(n))\right]
 $$
@@ -140,11 +173,13 @@ While modern gaming consoles mostly use SoC (System-on-Chip) designs based on AR
 Figure 3 shows the block diagram of the SNES. The whole assembly consists of a CPU and RAM, a Picture Processing Unit (PPU) to generate analog video signals and an Audio Processing Unit (APU) for music and sound effects. The main three buses that link all the individual components together are the two address buses A (24 bit) and B (8 bit), as well as the data bus (8 bit). While address bus A is the main form of transfer between the individual parts, address bus B is used for DMA operations in smaller memory regions. Instructions and data are provided as ROM through the cartridge slot and other peripheral components (Joy-pad Slots, Region Lockout Logic,…) are directly wired to the CPU.
 
 ![a44d2672270018c9b1025f75d6d58871.png](images/a44d2672270018c9b1025f75d6d58871.png)
+
 *Figure 3: SNES Architecture Overview*
 
 The 5A22 CPU maps all internal registers and all peripheral components on a single memory space of 24 bit. This means, that data transfer to and from ROM works in the same way as manipulation of internal registers, by writing or reading to or from addresses in a 24-bit memory space.
 
 ![e85e6234a8ae5912ed1966f90ad59322.png](images/e85e6234a8ae5912ed1966f90ad59322.png)
+
 *Figure 4: Typical cartridge layout* [“Snes Cartucho Esquematico” by “Deltablade2005” (original work), released on july 25th 2018 under Creative Commons Attribution-Share Alike 4.0 International license.]
 
 Figure 4 shows a typical cartridge layout as intended by Nintendo. As can be seen, there are only few passive components on a cartridge, and these are mainly used for power supply control and regulation. The chip called D411A is the region lockout chip, which connects directly to the region lockout logic in the console and is otherwise detached from the rest of the circuits in the cartridge. The big IC on the right is the ROM which also has an additional address decoder (74LS139A) that can be used to expand or shift memory space to a specific region. In the upper right is additional RAM to store safe states or simply to expand the console’s internal RAM.
@@ -153,6 +188,7 @@ Figure 4 shows a typical cartridge layout as intended by Nintendo. As can be see
 The CPU1 in the SNES is the Ricoh 5A22 microprocessor (figure 5) which is clocked at 21.28137MHz (for PAL operation). With the 65C816 core, it is based on the MOS Technology 6502 family of processors, but contains a variety of support hardware. Most prominent, a controller port interface to access serial data from the joy-pad controllers. There is also circuitry for generating non-maskable and maskable interrupts, a DMA unit for fast memory transfer and a couple of registers for multiplication and division. The 65C816 core has a 16-bit internal bus architecture with an 8-bit external databus and 24-bit external data bus [4].
 
 ![4defb8f07058c6beb289c5448ed3b639.png](images/4defb8f07058c6beb289c5448ed3b639.png)
+
 *Figure 5: Ricoh 5A22 CPU* [“Ricoh 5A22” by “Yaca2671” (original work), released on april 10th 2007 under Attribution-ShareAlike 3.0 Unported license.]
 
 Instructions are 1-byte opcodes followed by 0-3 byte operands and are actually very similar to RISC instructions in regards of complexity, even though, the 65C816 core is more closely related to a CISC architecture. The big difference to a RISC processor are the numerous addressing modes, which is a distinct feature of a CISC core.
@@ -164,6 +200,7 @@ Top to bottom, the graph in figure 6 shows the following signals on the system b
 The “read” signal is used by the processor whenever it tries to access data that is stored in a readable area of the memory map. For instance, fetching an instruction from ROM memory would set the “read” signal and also the “ROM select” signal. This way, the memory chip in the cartridge is activated and will produce data on the data bus, corresponding to the address on the address bus.
 
 ![748787b6f1252e7eccf9d61c1e9a0a58.png](images/748787b6f1252e7eccf9d61c1e9a0a58.png)
+
 *Figure 6: General Bus Transfer Timing
 Signals top to bottom: Clock (CLK), Read (RD), Write (WR), ROM select, Interrupt Request (IR), contents of the address bus and the contents of the data bus.*
 
@@ -174,6 +211,7 @@ Figure 7 displays such a read from ROM. This procedure is actually the very firs
 As can be seen in the figures, the first address accessed is `0x00:FFFCh` (reset vector). The LSB at this location is `0x00h`, which is read on the fall of the clock (at the timer mark 1 in green). From this clock fall on, it takes 50ns until the next address (`0x00:FFFDh`) is ready on the bus. While the signal “read” goes low, the ROM fetches the MSB of the reset vector which is `0x80h` in this example. This byte is read by the processor on the next clock fall, which is about 400ns after the previous clock fall. This duration of time corresponds roughly to a frequency of 2,68MHz, which is the documented speed for ROM access.
 
 ![b93bdb41d724433087c59fccaa76b187.png](images/b93bdb41d724433087c59fccaa76b187.png)
+
 *Figure 7: ROM Read Timing*
 
 In the beginning of this project, an idea to emulate a ROM chip was to generate an interrupt signal in the ARM microcontroller on every clock fall. Quick measurements revealed though, that the shortest latency for any reaction by the ARM MCU (after an external interrupt) would be about 150ns. Which isn’t a lot, but still too slow for any additional logic, to provide the SNES’ CPU with valuable data. Based on the result, the firmware relies heavily on polling, which ties the MCU core completely up, but works much faster than external interrupts.
@@ -186,6 +224,7 @@ A video game console such as the SNES originally uses cathode ray tube (CRT) mon
 The pattern the beam traces out on the screen is displayed in figure 8, while there are many more scan lines than shown in this graphic. At the end of one frame, the beam reaches the bottom right corner of the screen and has to move back up again. During this amount of time, the beam is turned off (blanked), which gives this period the name “vertical blank”, or v-blank for short.
 
 ![ee2416fdfef1b5b3943862a18fd58468.png](images/ee2416fdfef1b5b3943862a18fd58468.png)
+
 *Figure 8: Illustration of raster scanning* ["Illustration of raster scanning" by Ian Harvey (original work), released on november 1st 2018 under Public Domain.]
 
 In the PAL standard, frames are displayed at a frequency of 50Hz. To get a sense of time scale, this frequency means that a frame is 20ms long, while the v-blank period is  4.68ms in duration, which already takes up 23.4% of the entire frame.
@@ -205,6 +244,7 @@ The audio processing unit (APU) of the SNES consists of three main parts: The di
 While the DSP is responsible for digital generation of audio waveforms and the conversion of these digital streams to analog signals, the SPC-700 is practically only responsible for the control and configuration of the DSP. While this could also be done by the CPU, the SPC-700 acts as an audio co-processor. The audio RAM does not only contain sample data, but also whole arrangements of songs as series of instructions for the SPC-700. The CPU is only used to transfer arrangements through the SPC-700 into the audio RAM.
 
 ![41f47b1fe10a96c9fe2b3de750672bf5.png](images/41f47b1fe10a96c9fe2b3de750672bf5.png)
+
 *Figure 9: APU Overview*
 
 As we can see in Figure 9, the APU is interfacing with everything else on the SNES via the SPC-700. There's an 8-bit data bus and only a 4-bit address bus connected from the CPU to the APU. The four address lines are referred to as PA0, PA1, PA6 and PA7. These lines are not connected to the main address bus, but rather a part of the second address bus of the CPU, also known as address bus B. While signals PA0 and PA1 are used to address a total of four possible registers in the SPC-700, the signals PA6 and PA7 are actually connected to the pins CS (chip select) and /CS (chip select inverted) on the SPC-700. So the SPC is only active when CS (or rather PA6) is active, and /CS (PA7) is low. This idea is further investigated in chapter 1.3.4.1 SPC-700.
@@ -307,6 +347,7 @@ Figure 10 shows the flow diagram of one of the eight audio channels in the DSP. 
 The pitch converter block is what defines the playback speed of a sample and therefore the resulting frequency. Pitch is defined by a 14-bit value, while the resulting frequency depends on the frequency of the original sound too (see equation 2).
 
 *Equation 2*
+
 $$
 f = f_0 \cdot \frac{Pitch}{2^{12}}
 $$
@@ -317,6 +358,7 @@ At this point, the signal can be multiplied with an ADSR envelope curve. This cu
 As mentioned, effects can also be applied at this point if the signals are routed to the effects processing section. The external memory can be used for echo effects again (reverb does not use additional memory). Next in line is an 8-tap FIR filter with filter coefficients in an 8-bit range. This filter is the same for left and right channels on all audio channels. With the “echo feedback” flag, it is possible to pass the filtered signal back to the input of the echo effect.
 
 ![a933d4b1892647b897fdb06e39735359.png](images/a933d4b1892647b897fdb06e39735359.png)
+
 *Figure 10: APU Sound Flow Diagram* [“Sound Signal Flow” from “Super Nintendo Developer Manual” [5] (f. 3.1.3, p. 3-1-4). Released by Nintendo of Japan in 1993.]
 
 #### 1.3.4.4 Bit Rate Reduction Audio Format (BRR)
@@ -325,16 +367,19 @@ This works, because the header block can change the granularity of the following
 Figure 11 shows one entire block of sample data. The header contains a 4-bit granularity value and defines one of four possible filter types that may be applied additionally to the output. The last bits define if the sample is supposed to be played in a loop and if it’s intended as the final block of an audio sample.
 
 ![a44d27b2dd6246dca36fb0b06054d075.png](images/a44d27b2dd6246dca36fb0b06054d075.png)
+
 *Figure 11: BRR Block and Header* [“BRR Data String” from “Super Nintendo Developer Manual” [5] (f. 3.2.1, p. 3-2-1). Released by Nintendo of Japan in 1993.]
 
 A 4-bit parameter for granularity can have up to 16 different values. 12 of which are used to define the sample resolution, as shown in figure 12.
 
 ![f2b818fbfaa4418359142f9ac24e00c9.png](images/f2b818fbfaa4418359142f9ac24e00c9.png)
+
 *Figure 12: BRR range shift* [“BRR Range Data” from “Super Nintendo Developer Manual” [5] (f. 3.2.2, p. 3-2-2). Released by Nintendo of Japan in 1993.]
 
 The graph in figure 13 illustrates this for an audio sample that is made up of three consecutive blocks. If the audio uses the whole dynamic range, the 16 original bits are divided into only 4 bits. Without filtering this would lead to audible distortion. But an audio signal that only uses a quarter of the whole dynamic range will be presented as if it was sampled with 16 bits.
 
 ![707d696643f74a6e8309a258c2687777.png](images/707d696643f74a6e8309a258c2687777.png)
+
 *Figure 13: BRR example illustration* [“Example Data When Filter = 0” from “Super Nintendo Developer Manual” [5] (f. 3.2.3, p. 3-2-3). Released by Nintendo of Japan in 1993.]
 
 # 2 Cartridge Hardware Development
@@ -344,11 +389,13 @@ The only unfamiliar component in this diagram is the “region lockout chip”. 
 In this project, the lockout chip was simply extracted from a donor cartridge and connected to corresponding pins on the cartridge edge connector. A footprint for this chip could be generated very easily since the package is a common DIP-8 housing.
 
 ![2262d33832a56cbceb5e37cf8cbf8eee.png](images/2262d33832a56cbceb5e37cf8cbf8eee.png)
+
 *Figure 14: Cartridge Overview*
 
 Figure 15 shows a 3D rendering of the finished board. As can be seen in this image, it is a double layer PCB with both through-hole and surface mounted devices. The board cutout is based on an original SNES cartridge so the housing can also be based on original device dimensions. The edge connector should actually be gold coated (to prevent corrosion), but this production step was too expensive for a prototype. There are a few 2.5mm molex headers on the board that are used for debugging and possible additional peripherals like buttons or LEDs. The potentiometers are manufactured by the company Alpha and typically used with eurorack synthesizer modules.
 
 ![a2ade55827ff9054c299b7743ac2464c.png](images/a2ade55827ff9054c299b7743ac2464c.png)
+
 *Figure 15: Cartridge Visualization*
 
 ## 2.1 Microcontroller
@@ -357,6 +404,7 @@ The microcontroller uses an LQFP-144 package, which means that there are 144 pin
 Figure 16 shows the typical footprint for LQFP-144 packages. These drawings are usually provided in any corresponding datasheet.
 
 ![6e8d9c183ba32c291ad9ba1927672b68.png](images/6e8d9c183ba32c291ad9ba1927672b68.png)
+
 *Figure 16: LQFP-144 landing pattern* [Figure taken from document "DS11243" (STM32F777BI Datasheet, f. 90, p. 228) by STMicroelectronics. Downloaded on february 23rd 2020 from https://www.st.com/resource/en/datasheet/stm32f777bi.pdf]
 
 When designing layouts for microcontrollers, special care has to be taken regarding supply currents. Since small current peaks, or disturbances in the supply current in general, can prevent the microcontroller from working correctly, all integrated peripherals are usually powered from individual supply pins. Capacitors need to be placed in very close proximity to these pins. In a best case scenario right on the other side of the PCB.
@@ -367,17 +415,20 @@ In some sense, these connections are fairly straightforward. While 24 address li
 Since all STM32 MCUs are 3.3V logic level devices, and the 5A22 is an older 5V device, signals are not directly compatible, except for some exceptions: The STM32 features 5V-tolerance on almost all input pins, but it cannot generate 5V logic levels. This is why the schematic features an 8-bit logic level shifter (figure 17) on the data bus between the microcontroller and the system bus of the console.
 
 ![5d6aeb88aac249ca8d792103932f9a7f.png](images/5d6aeb88aac249ca8d792103932f9a7f.png)
+
 *Figure 17: Bus Transceiver Schematic*
 
 This logic level shifter operates in one direction only at a time, which may be altered by a dedicated “direction” pin on the device. This pin is connected directly to a GPIO on the STM32, so the logic level shifter direction can be changed at any time in firmware.
 Figure 18 shows a small part of the Super Nintendo schematic. The connector P1 refers to the cartridge connector on the console. As can be seen, the inner part of this connector has 46 pins that are directly connected to the main system bus and feature all control, data and address lines. The outer 16 pins are referred to as “extended cartridge connector” and feature an additional audio input that can be mixed with the APU audio output, as well as a connection to the second address bus in the system (address bus B). This means, that in theory it would be possible to transfer data directly to the APU via address bus B, without even going through the main CPU. Firstly, this was discovered too late in the development process and secondly, programming the main CPU was a goal in this project too.
 
 ![843dd439992e78629e25da7328b2a6c3.png](images/843dd439992e78629e25da7328b2a6c3.png)
+
 *Figure 18: SNES Cartridge Port Pinout*
 
 The PCB in figure 19 is a slice of the cartridge PCB that was designed in this project. The excerpt shows the connections between the microcontroller and the edge connector. While many signals are directly routed from the edge connector to the microcontroller, there are eight signals routed to the level shifter. These are the data lines that can be enabled in both directions.
 
 ![6c2b3d8b84c6f2cfce1251b73d07ef23.png](images/6c2b3d8b84c6f2cfce1251b73d07ef23.png)
+
 *Figure 19: Cartridge Schematic excerpt*
 
 ## 2.3 Potentiometers and other peripherals
@@ -388,6 +439,7 @@ A simple way to test new hardware like this, is to provide an LED that can be co
 The minimalist power supply on this board uses a low drop-out voltage regulator (LDO) to transform the 5V supply, that are provided by the console on the cartridge slot, into 3.3V that are used by the microcontroller. There are two LEDs in the LDO circuit to monitor the voltage stability in this important part of the schematic. Basically, the LDO circuit (figure 20) is very much as proposed in the datasheet, except for the additional LEDs. Also, the enable pin is directly connected to the voltage input, so the chip does not need to be enabled by an additional GPIO line.
 
 ![742195eb6b3f9abfce91c919e13a8675.png](images/742195eb6b3f9abfce91c919e13a8675.png)
+
 *Figure 20: LDO schematic proposal 12* [Figure taken from document "LD39050 Datasheet" (f. 35, p. 16) by STMicroelectronics. Downloaded on february 23rd 2020 from https://www.st.com/resource/en/datasheet/ld39050.pdf]
 
 # 3 Firmware Development
@@ -403,6 +455,7 @@ As soon as the CPU enters the main loop, the CPU and the microcontroller are loc
 The microcontroller reads these addresses and produces the corresponding 8-bit values (for volume, frequency, etc.) on the 8-bit data bus. These values are read by the CPU and subsequently stored in a buffer array in RAM.
 
 ![7420a86f616a23158f1a945569aa0ba4.png](images/7420a86f616a23158f1a945569aa0ba4.png)
+
 *Figure 21: Audio Parameter Processing Flow Diagram*
 
 When the CPU is done fetching and storing updated DSP values, it executes the WAI instruction. WAI is a 65xx specific instruction that stops the processor until a v-blank interrupt is encountered. As soon as the PPU is done drawing a frame, it will return the electron beam to the upper left corner of the screen and turn it off (blank) during this time. This is when the v-blank interrupt is activated and the CPU wakes up again.
@@ -458,12 +511,14 @@ Running instruction from ROM is the commonly used application behavior. But, it 
 Figure 22 illustrates the generated layout of ROM bank 0, which is used in this project. This layout was made to keep track of where particular blocks of instructions or data are stored. This way, copying instructions from ROM to RAM only applies to blocks form one offset to another and development is made easier. The offsets are shown in arbitrary 0x0400h increments that are chosen in this size for simplicity reasons. Not every area of an offset is completely filled with instructions or data.
 
 ![4af21ae01f993a02b79c39ba454e01a5.png](images/4af21ae01f993a02b79c39ba454e01a5.png)
+
 *Figure 22: ROM layout*
 
 The first offset is kept free just in case that any important instructions are needed later in the development process. At the offset from 5120 to 8192, there is data that will be transferred to the RAM of the PPU. This is graphics data for the user interface (characters, tiles and color palettes).
 At offset 8192 is the whole v-blank interrupt routine stored in ROM. This chunk of bytes will be transferred to RAM in its entirety and the v-blank interrupt will execute the routine from there. The address in RAM where this routine is stored is fetched from an address in vector table at the end of the ROM bank. This is actually not part of the ROM bank but a hardwired region of the memory map that only holds vectors to interrupt service routines.
 
 ![52c757b6ff2de4973d88ef9518c22631.png](images/52c757b6ff2de4973d88ef9518c22631.png)
+
 *Figure 23: SNES Initialization Flow Diagram*
 
 **Overview:**
@@ -491,6 +546,7 @@ For the user interface, there are three important data packages needed: color pa
 The GUI is made up from three different background layers. Figure 24 shows the complete interface as displayed in an emulator. The orange tiles are a static background that does not change with user input. Background 2 are the white numbers and bars. These are modified when the user changes volume or pitch of the sound. This is also why this particular tile map needs to be updated within the v-blank routine, when new DSP configurations have been fetched from the microcontroller. The third layer is static again and only displays a two-color logo on the top of the screen.
 
 ![a4512b4cad95be686287486a1f773a8c.png](images/a4512b4cad95be686287486a1f773a8c.png)
+
 *Figure 24: Emulated GUI*
 
 All graphics data has to be stored in VRAM. While VRAM can be accessed with the usual memory transfer instructions, especially for large amounts of data such as tile maps, it is useful to utilize the DMA controller of the 5A22, since DMA transfer is executed without the need of the CPU and is much faster because it essentially connects peripherals directly to each other. In this project, the macros LoadPalette and LoadTiles make use of DMA.
@@ -512,6 +568,7 @@ spc_wait_boot:  LDA       #$AA
 As soon as the SPC-700 is initialized, it is possible to write sample data into the APU memory.  The write procedure can be seen in figure 25. Without any instructions to run on the SPC-700, the full 65456 bytes of memory may be used for sample data.
 
 ![1e83af0cd1de9797f7f4990094b5675b.png](images/1e83af0cd1de9797f7f4990094b5675b.png)
+
 *Figure 25: SNES APU Data Transfer Procedure* [“Data Transfer Procedure” from “Super Nintendo Developer Manual” [5] (appendix D, p. D-1). Released by Nintendo of Japan in 1993.]
 
 ## 3.4 ARM µC Firmware
@@ -593,8 +650,12 @@ SNES System Features (Retro Game Mechanics Explained): https://www.youtube.com/w
 
 # Bibliography
 
-[1]:	R. Bristow-Johnson, “Wavetable Synthesis 101. A Fundamental Perspective”, USA: Wave Mechanics, Inc., 1996 
+[1]:	R. Bristow-Johnson, “Wavetable Synthesis 101. A Fundamental Perspective”, USA: Wave Mechanics, Inc., 1996
+
 [2]:	S. D. Trautmann and N. M. Cheung, “Wavetable Music Synthesis For Multimedia And Beyond”, Japan: Texas Instruments Research and Development Center, 1989
+
 [3]:	W. Ritsch, “Klangsynthese 1”, Institute of Electronic Music and Acoustics, University of Art Graz, 2010
+
 [4]:	The Western Design Center Inc., “WDC65C816 Datasheet”, USA, 2018
+
 [5]:	Nintendo, “Super Nintendo Development Manual”, Japan, 1993
